@@ -13,23 +13,125 @@ The nodes communicate via **LoRa E32 modules** using a lightweight **VP/VAL comm
 
 # System Architecture
 
-```
-              LoRa (E32)
-     ┌─────────────────────────┐
-     │                         │
-     ▼                         ▲
-┌──────────────┐        ┌──────────────┐
-│  Sensor Node │        │ Controller   │
-│   (ESP32-A)  │        │  Node (ESP32-B)
-│              │        │              │
-│ Sensors      │        │ DWIN Display │
-│ Flow meter   │        │ Buttons      │
-│ TDS sensor   │        │ Control relays
-│ Pressure     │        │              │
-│ Temperature  │        │              │
-│ Water level  │        │              │
-└──────────────┘        └──────────────┘
-```
+System Architecture Diagram
+                                   ┌─────────────────────────────────────┐
+                                   │            CONTROLLER NODE          │
+                                   │              ESP32-B                │
+                                   └─────────────────────────────────────┘
+                                                   │
+                                                   │ UART
+                                                   │
+                                           ┌───────────────┐
+                                           │  LoRa E32     │
+                                           │  Address = 1  │
+                                           └───────┬───────┘
+                                                   │
+                                     LoRa Wireless │ 868 MHz
+                                                   │
+                                           ┌───────▼───────┐
+                                           │  LoRa E32     │
+                                           │  Address = 2  │
+                                           └───────────────┘
+                                                   │
+                                                   │ UART
+                                                   │
+                                   ┌─────────────────────────────────────┐
+                                   │              SENSOR NODE            │
+                                   │               ESP32-A               │
+                                   └─────────────────────────────────────┘
+Sensor Node Internal Architecture (ESP32-A)
+                         ┌────────────────────────────────┐
+                         │            ESP32-A             │
+                         │                                │
+                         │  FreeRTOS Tasks                │
+                         │                                │
+                         │  ┌──────────────────────────┐  │
+Sensors → ADC/I2C →     │  │   sensorReadTask          │  │
+                         │  │                          │  │
+Flow sensor → GPIO →    │  │   flowTask                │  │
+                         │  │                          │  │
+LoRa UART →             │  │   loraRxTask              │  │
+                         │  │                          │  │
+Telemetry →             │  │   processTelemetry()      │  │
+                         │  └──────────────────────────┘  │
+                         │                                │
+                         │  Shared Data Layer             │
+                         │                                │
+                         │  qualityByte                   │
+                         │  flowByte                      │
+                         │  pressureByte                  │
+                         │  waterLevel                    │
+                         │  temperatureValue              │
+                         │                                │
+                         └────────────────────────────────┘
+Sensor Node Hardware Layer
+                     ┌──────────────────────────────┐
+                     │         SENSOR NODE          │
+                     │            ESP32             │
+                     └───────────────┬──────────────┘
+                                     │
+                   ┌─────────────────┼─────────────────┐
+                   │                 │                 │
+                   ▼                 ▼                 ▼
+
+            ADS1115 ADC        Flow Sensor        DS18B20
+            (I2C)              (Interrupt)        (1-Wire)
+
+        ┌─────────────┐     ┌─────────────┐   ┌─────────────┐
+        │ Pressure    │     │ Water Flow  │   │ Temperature │
+        │ Sensor      │     │ Sensor      │   │ Sensor      │
+        └─────────────┘     └─────────────┘   └─────────────┘
+
+
+                   ▼
+             TDS Sensor
+             (Analog)
+
+                   ▼
+          Ultrasonic Level Sensor
+Controller Node Internal Architecture (ESP32-B)
+                    ┌────────────────────────────────┐
+                    │            ESP32-B             │
+                    │                                │
+                    │   FreeRTOS Tasks               │
+                    │                                │
+                    │  ┌──────────────────────────┐  │
+                    │  │   loraRxTask             │  │
+                    │  │                          │  │
+                    │  │   buttonTask             │  │
+                    │  │                          │  │
+                    │  │   heartbeatLoop          │  │
+                    │  │                          │  │
+                    │  │   requestTelemetry()     │  │
+                    │  └──────────────────────────┘  │
+                    │                                │
+                    │  Shared Sensor Data            │
+                    │                                │
+                    │  flowValue                     │
+                    │  pressureValue                 │
+                    │  qualityValue                  │
+                    │  temperatureValue              │
+                    │  levelValue                    │
+                    │                                │
+                    └────────────────────────────────┘
+Controller Node Hardware Layer
+                 ┌──────────────────────────────┐
+                 │        CONTROLLER NODE       │
+                 │            ESP32             │
+                 └───────────────┬──────────────┘
+                                 │
+                ┌────────────────┼────────────────┐
+                │                │                │
+                ▼                ▼                ▼
+
+          DWIN HMI Display     PCF8575         LoRa E32
+          (UART)               (I2C)           (UART)
+
+      ┌─────────────┐    ┌─────────────┐
+      │ UI Screen   │    │ Buttons /   │
+      │ Telemetry   │    │ Switches    │
+      │ Controls    │    │ Inputs      │
+      └─────────────┘    └─────────────┘
 
 ---
 
