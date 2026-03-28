@@ -114,6 +114,13 @@ The nodes communicate via **LoRa E32 modules** using a lightweight **VP/VAL comm
   
     Ultrasonic Level Sensor
 ---
+
+# Project Visuals
+
+![](pic1.jpeg)
+![](pic2.jpeg) ![](pic3.jpeg)
+![](pic4.jpeg)
+
 # Features
 
 ### Sensor Node
