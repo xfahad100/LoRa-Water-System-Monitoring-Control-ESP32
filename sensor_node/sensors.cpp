@@ -2,6 +2,7 @@
 #include "shared_data.h"
 #include "sensors.h"
 #include <Adafruit_ADS1X15.h>
+#include <HardwareSerial.h>
 
 // Calibration points (replace with your measured ADCs)
 const int32_t ADC_POINTS[] = {239, 16098, 24345};
@@ -11,9 +12,13 @@ Adafruit_ADS1115 ads;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature tempSensor(&oneWire);
 PCF8575 pcf8575(0x20);
+UltrasonicA02YYUW Levelsensor(Serial1, 26, 27); // RX, TX
 
 void initSensors()
 {
+    Levelsensor.begin();
+      delay(150);
+
     // ---- ADS1115 ----
     if (!ads.begin(0x48)) {
         Serial.println("ADS1115 not found!");
@@ -37,26 +42,27 @@ void initSensors()
 }
 
 float readWaterLevelMM() {
-  
-    int adc = ads.readADC_SingleEnded(WATER_LEVEL_PIN);
-    //Serial.println(adc);
-    // Clamp ADC
-    if (adc <= ADC_POINTS[0]) return LEVEL_POINTS[0];
-    if (adc >= ADC_POINTS[NUM_POINTS-1]) return LEVEL_POINTS[NUM_POINTS-1];
-    float level = 0;
-    for (int i = 0; i < NUM_POINTS - 1; i++)
-    {
-        if (adc >= ADC_POINTS[i] && adc <= ADC_POINTS[i+1])
-        {
-            // Linear interpolation
-            level = LEVEL_POINTS[i] + 
-                   (float)(adc - ADC_POINTS[i]) * 
-                   (LEVEL_POINTS[i+1] - LEVEL_POINTS[i]) / 
-                   (ADC_POINTS[i+1] - ADC_POINTS[i]);
-        }
+    Levelsensor.update();  // call update routine
+
+    float d = Levelsensor.getDistance();  // distance in cm
+
+    if (d > 0) {
+        Serial.print("level: ");
+        Serial.print(d);
+        Serial.println(" cm");
+
+        // Map distance to percentage
+        // Clamp distance between FULL and EMPTY
+        if (d > 75.0) d = 75.0;
+        if (d < 10.0) d = 10.0;
+
+        // Linear mapping: 75 cm -> 0%, 10 cm -> 100%
+        float percent = (75.0 - d) * 100.0 / (75.0 - 10.0);
+
+        return percent;
     }
-    
-    return level;
+
+    return 0;  // if sensor fails
 }
 
 void readPressure(float *V, float *P)

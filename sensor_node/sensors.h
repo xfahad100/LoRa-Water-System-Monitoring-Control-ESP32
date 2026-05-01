@@ -1,5 +1,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <UltrasonicA02YYUW.h>
 
 #define ONE_WIRE_BUS 4      // DS18B20 on GPIO4
 
@@ -17,9 +18,3 @@ namespace sensor {
   float tdsThreshold = 10;
 }
 float TDS_FACTOR = 0.65f;
-
-//level sensor
-#define WATER_LEVEL_PIN 1
-#define R_FIXED 150.0f      // Fixed resistor in ohms
-#define ADC_MAX 4095.0f
-#define VREF 3.3f 
