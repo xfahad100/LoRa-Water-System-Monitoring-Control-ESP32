@@ -1,16 +1,16 @@
 #include <Arduino.h>
 
 #include "config.h"
-#include "lib/sensors/sensors.h"
-#include "lib/flow_sensor/flow_sensor.h"
-#include "lib/lora_comm/lora_comm.h"
-#include "lib/failsafe/failsafe.h"
+#include "sensors.h"
 #include "shared_data.h"
 
 volatile uint8_t qualityByte;
 volatile uint8_t flowByte;
 volatile uint8_t pressureByte;
 volatile float waterLevel;
+
+PCF8575 pcf8575(0x20);
+uint16_t pcf_state = 0xFFFF;  // all HIGH (LEDs OFF)
 
 int temperatureValue;
 

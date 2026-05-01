@@ -17,17 +17,7 @@ void failsafeCheck()
   {
     count_htbt_tout++;
     if(count_htbt_tout > 5){
-    pcf8575.digitalWrite(P0, HIGH);
-    pcf8575.digitalWrite(P1, HIGH);
-    pcf8575.digitalWrite(P2, HIGH);
-    pcf8575.digitalWrite(P3, HIGH);
-    pcf8575.digitalWrite(P4, HIGH);
-    pcf8575.digitalWrite(P5, HIGH);
-    pcf8575.digitalWrite(P6, HIGH);
-    pcf8575.digitalWrite(P7, HIGH);
-    pcf8575.digitalWrite(P8, HIGH);
-    pcf8575.digitalWrite(P9, HIGH);
-
+    pcf8575.write16(pcf_state);
     digitalWrite(LED_HB, LOW);
     Serial.println("htbt timeout!");
     req_button_states = true;

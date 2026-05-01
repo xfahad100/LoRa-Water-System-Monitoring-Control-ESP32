@@ -10,7 +10,6 @@ const int NUM_POINTS = sizeof(ADC_POINTS)/sizeof(ADC_POINTS[0]);
 Adafruit_ADS1115 ads;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature tempSensor(&oneWire);
-PCF8575 pcf8575(0x20);
 
 void initSensors()
 {
@@ -22,18 +21,10 @@ void initSensors()
     ads.setGain(GAIN_TWO);
     tempSensor.begin();
 
-    // Set pinMode to OUTPUT
-    pcf8575.pinMode(P0, OUTPUT);
-    pcf8575.pinMode(P1, OUTPUT);
-    pcf8575.pinMode(P2, OUTPUT);
-    pcf8575.pinMode(P3, OUTPUT);
-    pcf8575.pinMode(P4, OUTPUT);
-    pcf8575.pinMode(P5, OUTPUT);
-    pcf8575.pinMode(P6, OUTPUT);
-    pcf8575.pinMode(P7, OUTPUT);
-    pcf8575.pinMode(P8, OUTPUT);
-    pcf8575.pinMode(P9, OUTPUT);
     pcf8575.begin();
+    // Set pinMode to OUTPUT
+    pcf_state = 0xFFFF;   // all OFF
+    pcf8575.write16(pcf_state);
 }
 
 float readWaterLevelMM() {

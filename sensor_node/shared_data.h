@@ -13,6 +13,7 @@ extern int temperatureValue;
 extern unsigned long lastMessageTime;
 
 extern PCF8575 pcf8575;
+extern uint16_t pcf_state;  // all HIGH (LEDs OFF)
 
 extern bool req_button_states;
 

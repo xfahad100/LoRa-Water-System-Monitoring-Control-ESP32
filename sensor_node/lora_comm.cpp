@@ -8,6 +8,12 @@ HardwareSerial& lora = Serial2;
 bool allowSend = false;
 bool needAck = false;
 
+bool hdp = 0;      // case 65
+bool osmose = 0;   // case 66
+bool wasser = 0;   // case 68
+bool tanken = 0;   // case 45
+bool tank_leeren = 0;   // case 46
+
 #define RX_BUF_SIZE 256
 char rxBuf[RX_BUF_SIZE];
 
@@ -64,6 +70,60 @@ void processTelemetry()
   }
 }
 
+void updateOutputs()
+{
+    pcf_state = 0xFFFF;   // all OFF
+
+    if (hdp)
+    {
+        Serial.println("HDP ACTIVE");
+        pcf_state &= ~((1 << 2) | (1 << 6) | (1 << 9));
+    }
+
+    if (osmose)
+    {
+        Serial.println("OSMOSE ACTIVE");
+        pcf_state &= ~((1 << 1) | (1 << 5) | (1 << 7) | (1 << 9) | (1 << 10));
+    }
+
+    if (wasser)
+    {
+        Serial.println("WASSER ACTIVE");
+        pcf_state &= ~((1 << 2) | (1 << 3) | (1 << 6) | (1 << 9));
+    }
+
+    if (tanken && waterLevel < 100.0)
+    {
+        Serial.println("TANKEN ACTIVE");
+        pcf_state &= ~((1 << 0) | (1 << 12));
+    }
+    else{
+        pcf_state |= (1 << 0) | (1 << 12);
+    }
+
+    if (tank_leeren && waterLevel > 1.0)
+    {
+        Serial.println("TANK_LEEREN ACTIVE");
+        pcf_state &= ~((1 << 4) | (1 << 12));
+    }
+    else {
+        pcf_state |= ((1 << 4) | (1 << 12));
+    }
+    
+
+    
+
+    // Optional: print final state (very useful)
+    //Serial.print("PCF STATE: ");
+   // Serial.println(pcf_state, BIN);
+
+    //pcf_state = ~pcf_state;
+    //pcf_state = 0x0000;
+
+    pcf8575.write16(pcf_state);
+}
+
+
 void handleLine(char *msg)
 {
     char *p = msg + 5;          // skip "+RCV="
@@ -108,80 +168,43 @@ void handleLine(char *msg)
   // ==================================================
   switch (vp)
   {
-    case 0x65:   // HDP
-      //digitalWrite(LED_HDP, val ? HIGH : LOW);
-      pcf8575.digitalWrite(P0, val ? LOW : HIGH);
-      Serial.print("HDP = ");
-      Serial.println(val);
-      needAck = true;
-      break;
-
-    case 0x66:   // Osmose
-      pcf8575.digitalWrite(P1, val ? LOW : HIGH);
-      Serial.print("OSMOSE = ");
-      Serial.println(val);
-      needAck = true;
-      break;
-
-    case 0x67:   // Heizung
-      pcf8575.digitalWrite(P2, val ? LOW : HIGH);
-      Serial.print("HEIZUNG = ");
-      Serial.println(val);
-      needAck = true;
-      break;
-    
     case 0x52:
       if (vp == 0x52 && val == 0x01) {
         allowSend = true;
       }
-      break;
+        break;
+    case 0x65:  // HDP
+        hdp = val;
+        needAck = true;
+        break;
 
-    case 0x55:   // Reiniger K1 / K2
-      pcf8575.digitalWrite(P3, val ? LOW : HIGH);
-      Serial.print("Reiniger K1 / K2 = ");
-      Serial.println(val);
-      needAck = true;
-      break;
+    case 0x66:  // Osmose + Heizung
+        osmose = val;
+        needAck = true;
+        break;
 
-    case 0x56:   // Chemie Pumpe
-      pcf8575.digitalWrite(P4, val ? LOW : HIGH);
-      Serial.print("Chemie Pumpe = ");
-      Serial.println(val);
-      needAck = true;
-      break;
+    case 0x68:  // Wasser Quelle
+        wasser = val;
+        needAck = true;
+        break;
 
-    case 0x45:   // Tanken
-      pcf8575.digitalWrite(P5, val ? LOW : HIGH);
-      Serial.print("Tanken = ");
-      Serial.println(val);
-      needAck = true;
-      break;
+    case 0x45:  // Tanken
+        tanken = val;
+        needAck = true;
+        break;
 
-    case 0x46:   // Tank Leeren
-      pcf8575.digitalWrite(P6, val ? LOW : HIGH);
-      Serial.print("Tank Leeren = ");
-      Serial.println(val);
-      needAck = true;
-      break;
+    case 0x46:  // Tanken Leeren
+        tank_leeren = val;
+        needAck = true;
+        break;
 
-    case 0x47:   // Leitung Spühlen
-      pcf8575.digitalWrite(P7, val ? LOW : HIGH);
-      Serial.print("Leitung Spühlen = ");
-      Serial.println(val);
-      needAck = true;
-      break;
-    
-    case 0x68:   // Wasser Quelle
-      pcf8575.digitalWrite(P8, val ? LOW : HIGH);
-      Serial.print("Wasser Quelle = ");
-      Serial.println(val);
-      needAck = true;
-      break;
+      
 
     default:
-      Serial.print("UNBEKANNT VP=");
-      Serial.println(vp, HEX);
+        Serial.print("UNBEKANNT VP=");
+        Serial.println(vp, HEX);
   }
+  updateOutputs();
 }
 }
 
