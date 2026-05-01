@@ -2,6 +2,9 @@
 
 #include "config.h"
 #include "sensors.h"
+#include "flow_sensor.h"
+#include "lora_comm.h"
+#include "failsafe.h"
 #include "shared_data.h"
 
 volatile uint8_t qualityByte;

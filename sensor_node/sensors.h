@@ -5,18 +5,23 @@
 
 //quality
 namespace sensor {
-  float ecCalibration = 1.0f;
+  extern float ecCalibration;
 
   // 2-point calibration values
-  float tdsRaw1 = 0, tdsRaw2 = 0;
-  float tdsRef1 = 0, tdsRef2 = 0;
+  extern float tdsRaw1;
+  extern float tdsRaw2;
+  extern float tdsRef1;
+  extern float tdsRef2;
 
-  float tdsSlope = 0.719642f;
-  float tdsOffset = -6.969f;
+  extern float tdsSlope;
+  extern float tdsOffset;
 
-  float tdsThreshold = 10;
+  extern float tdsThreshold;
 }
-float TDS_FACTOR = 0.65f;
+extern float TDS_FACTOR;
+
+void initSensors();
+void startSensorTask();
 
 //level sensor
 #define WATER_LEVEL_PIN 1

@@ -3,6 +3,22 @@
 #include "sensors.h"
 #include <Adafruit_ADS1X15.h>
 
+namespace sensor {
+  float ecCalibration = 1.0f;
+
+  // 2-point calibration values
+  float tdsRaw1 = 0;
+  float tdsRaw2 = 0;
+  float tdsRef1 = 0;
+  float tdsRef2 = 0;
+
+  float tdsSlope = 0.719642f;
+  float tdsOffset = -6.969f;
+
+  float tdsThreshold = 10;
+}
+float TDS_FACTOR = 0.65f;
+
 // Calibration points (replace with your measured ADCs)
 const int32_t ADC_POINTS[] = {239, 16098, 24345};
 const int32_t LEVEL_POINTS[] = {0, 50, 100};
